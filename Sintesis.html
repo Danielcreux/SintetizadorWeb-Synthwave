@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sintetizador Web • Synthwave</title>
+    <style>
+        /* ===== VARIABLES Y RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-panel: #151520;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00aa;
+            --accent-gold: #ffd700;
+            --key-white: #f0f0f0;
+            --key-black: #1a1a1a;
+            --text: #e0e0e0;
+            --glow: 0 0 20px currentColor;
+            --shadow-3d: 0 8px 0 rgba(0,0,0,0.5);
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* ===== LAYOUT PRINCIPAL ===== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-panel);
+            padding: 15px 25px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 30px rgba(0,240,255,0.2);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(0,240,255,0.5);
+        }
+
+        .master-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .master-controls input[type="range"] {
+            width: 100px;
+        }
+
+        .start-btn {
+            background: linear-gradient(145deg, var(--accent-magenta), #aa00aa);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--accent-magenta);
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--accent-magenta);
+        }
+
+        /* ===== TECLADO ===== */
+        .keyboard-section {
+            background: var(--bg-panel);
+            border-radius: 30px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .keyboard {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            position: relative;
+            height: 200px;
+        }
+
+        .key {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.05s;
+            border-radius: 0 0 8px 8px;
+            user-select: none;
+        }
+
+        .white-key {
+            background: var(--key-white);
+            color: #333;
+            width: 60px;
+            height: 200px;
+            border: 2px solid #ccc;
+            box-shadow: var(--shadow-3d);
+            z-index: 1;
+        }
+
+        .black-key {
+            background: var(--key-black);
+            color: white;
+            width: 40px;
+            height: 130px;
+            margin-left: -20px;
+            margin-right: -20px;
+            z-index: 2;
+            box-shadow: 0 5px 0 #000, 0 0 15px rgba(255,255,255,0.2);
+            border: 1px solid #333;
+        }
+
+        .key.active {
+            background: var(--accent-cyan);
+            color: black;
+            box-shadow: 0 0 30px var(--accent-cyan);
+            transform: translateY(4px);
+        }
+
+        /* ===== PANEL DE CONTROL ===== */
+        .control-panel {
+            background: var(--bg-panel);
+            border-radius: 30px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panel-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: space-between;
+        }
+
+        .panel-item {
+            flex: 1 1 200px;
+        }
+
+        .panel-item h3 {
+            color: var(--accent-cyan);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .wave-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .wave-btn {
+            background: #1e1e2a;
+            border: 2px solid #333;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wave-btn.active {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px var(--accent-cyan);
+            transform: scale(1.1);
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .slider-group label {
+            font-size: 0.9rem;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #2a2a3a;
+            border-radius: 10px;
+            -webkit-appearance: none;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .adsr-preview {
+            background: #1a1a25;
+            height: 60px;
+            border-radius: 10px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .adsr-curve {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                var(--accent-magenta) 0%, 
+                var(--accent-magenta) 20%,
+                var(--accent-cyan) 40%,
+                var(--accent-cyan) 70%,
+                var(--accent-gold) 100%);
+            opacity: 0.5;
+            clip-path: polygon(0% 100%, 10% 0%, 30% 50%, 70% 50%, 90% 0%, 100% 100%);
+        }
+
+        /* ===== VISUALIZADOR ===== */
+        .visualizer-section {
+            background: var(--bg-panel);
+            border-radius: 30px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 150px;
+            background: #0c0c14;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #waveform-canvas {
+            width: 100%;
+            height: 100%;
+            background: #0c0c14;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mode-btn {
+            background: #1e1e2a;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .mode-btn.active {
+            background: var(--accent-cyan);
+            color: black;
+        }
+
+        /* ===== SECUENCIADOR ===== */
+        .sequencer-section {
+            background: var(--bg-panel);
+            border-radius: 30px;
+            padding: 20px;
+        }
+
+        .sequencer-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .step {
+            aspect-ratio: 1 / 1;
+            background: #1a1a25;
+            border-radius: 12px;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .step.active {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 20px var(--accent-cyan);
+            border-color: white;
+        }
+
+        .step.current {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px var(--accent-gold);
+        }
+
+        .sequencer-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            align-items: center;
+        }
+
+        .play-btn {
+            background: var(--accent-gold);
+            border: none;
+            color: black;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tempo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== ANIMACIÓN DE PELOTAS ===== */
+        .animation-section {
+            background: var(--bg-panel);
+            border-radius: 30px;
+            padding: 20px;
+        }
+
+        .animation-canvas {
+            width: 100%;
+            height: 200px;
+            background: #0c0c14;
+            border-radius: 20px;
+            display: block;
+        }
+
+        .animation-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .keyboard {
+                flex-wrap: wrap;
+                height: auto;
+            }
+            .white-key { width: 45px; }
+            .black-key { width: 30px; margin-left: -15px; margin-right: -15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚡ SYNTHWAVE 3000</div>
+            <div class="master-controls">
+                <input type="range" id="master-gain" min="0" max="1" step="0.01" value="0.8">
+                <button class="start-btn" id="start-audio">▶ INICIAR AUDIO</button>
+            </div>
+        </div>
+
+        <!-- TECLADO VIRTUAL -->
+        <div class="keyboard-section">
+            <h2 style="color: var(--accent-cyan); margin-bottom: 10px;">⌨️ TECLADO (C3 - B4)</h2>
+            <div class="keyboard" id="keyboard-container"></div>
+        </div>
+
+        <!-- PANEL DE CONTROL -->
+        <div class="control-panel">
+            <div class="panel-grid">
+                <div class="panel-item">
+                    <h3>FORMA DE ONDA</h3>
+                    <div class="wave-selector" id="wave-selector">
+                        <div class="wave-btn active" data-wave="sine">📈</div>
+                        <div class="wave-btn" data-wave="square">📊</div>
+                        <div class="wave-btn" data-wave="sawtooth">🔺</div>
+                        <div class="wave-btn" data-wave="triangle">📐</div>
+                    </div>
+                </div>
+                <div class="panel-item">
+                    <h3>FILTRO PASO BAJO</h3>
+                    <div class="slider-group">
+                        <label>Frecuencia <span id="filter-freq-val">1000 Hz</span></label>
+                        <input type="range" id="filter-freq" min="50" max="5000" value="2000" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <label>Resonancia (Q) <span id="filter-q-val">0</span></label>
+                        <input type="range" id="filter-q" min="0" max="20" value="0" step="0.1">
+                    </div>
+                </div>
+                <div class="panel-item">
+                    <h3>ENVOLVENTE ADSR</h3>
+                    <div class="slider-group">
+                        <label>Ataque <span id="attack-val">0.1 s</span></label>
+                        <input type="range" id="attack" min="0.001" max="2" value="0.1" step="0.001">
+                    </div>
+                    <div class="slider-group">
+                        <label>Decaimiento <span id="decay-val">0.1 s</span></label>
+                        <input type="range" id="decay" min="0.001" max="2" value="0.1" step="0.001">
+                    </div>
+                    <div class="slider-group">
+                        <label>Sustain <span id="sustain-val">0.7</span></label>
+                        <input type="range" id="sustain" min="0" max="1" value="0.7" step="0.01">
+                    </div>
+                    <div class="slider-group">
+                        <label>Release <span id="release-val">0.5 s</span></label>
+                        <input type="range" id="release" min="0.001" max="3" value="0.5" step="0.001">
+                    </div>
+                    <div class="adsr-preview">
+                        <div class="adsr-curve" id="adsr-curve"></div>
+                    </div>
+                </div>
+                <div class="panel-item">
+                    <h3>EFECTOS</h3>
+                    <div class="slider-group">
+                        <label>Reverb (mix) <span id="reverb-val">0%</span></label>
+                        <input type="range" id="reverb" min="0" max="1" value="0.2" step="0.01">
+                    </div>
+                    <div class="slider-group">
+                        <label>Distorsión <span id="distortion-val">0</span></label>
+                        <input type="range" id="distortion" min="0" max="1" value="0" step="0.01">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISUALIZADOR -->
+        <div class="visualizer-section">
+            <div class="canvas-container">
+                <canvas id="waveform-canvas"></canvas>
+            </div>
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="wave">🌊 Onda</button>
+                <button class="mode-btn" data-mode="spectrum">📊 Espectro</button>
+                <button class="mode-btn" data-mode="particles">✨ Partículas</button>
+            </div>
+        </div>
+
+        <!-- SECUENCIADOR -->
+        <div class="sequencer-section">
+            <h3 style="color: var(--accent-cyan);">🎚️ SECUENCIADOR 8 PASOS</h3>
+            <div class="sequencer-grid" id="sequencer-grid"></div>
+            <div class="sequencer-controls">
+                <button class="play-btn" id="sequencer-play">▶ PLAY</button>
+                <div class="tempo">
+                    <label>Tempo <span id="bpm-val">120</span> BPM</label>
+                    <input type="range" id="bpm" min="40" max="240" value="120" step="1">
+                </div>
+                <button class="mode-btn" id="clear-sequencer">Limpiar</button>
+            </div>
+        </div>
+
+        <!-- ANIMACIÓN DE PELOTAS -->
+        <div class="animation-section">
+            <h3 style="color: var(--accent-cyan);">🎾 MODO PELOTAS MUSICALES</h3>
+            <canvas id="ball-canvas" class="animation-canvas" width="800" height="200"></canvas>
+            <div class="animation-controls">
+                <button class="mode-btn" id="toggle-balls">⏯️ Iniciar/Parar</button>
+                <button class="mode-btn" id="add-ball">➕ Añadir pelota</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== CONFIGURACIÓN ====================
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let initialized = false;
+            let masterGain, analyser, reverbNode, distortionNode, filterNode;
+            let currentWaveform = 'sine';
+            const activeNotes = new Map(); // nota -> {osc, gain, filter?}
+            const notesFreq = {
+                'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
+                'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88
+            };
+            const noteNames = ['C3','C#3','D3','D#3','E3','F3','F#3','G3','G#3','A3','A#3','B3','C4','C#4','D4','D#4','E4','F4','F#4','G4','G#4','A4','A#4','B4'];
+
+            // Parámetros ADSR
+            let adsr = {
+                attack: 0.1,
+                decay: 0.1,
+                sustain: 0.7,
+                release: 0.5
+            };
+
+            // ==================== INICIALIZACIÓN DE AUDIO ====================
+            function initAudio() {
+                if (initialized) return;
+                // Crear nodos
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = 0.8;
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 2048;
+                analyser.smoothingTimeConstant = 0.8;
+
+                filterNode = audioCtx.createBiquadFilter();
+                filterNode.type = 'lowpass';
+                filterNode.frequency.value = 2000;
+                filterNode.Q.value = 0;
+
+                // Reverb simple (delay con feedback)
+                reverbNode = audioCtx.createConvolver();
+                // Crear una respuesta al impulso simple (ruido blanco decayendo)
+                const reverbLength = 2;
+                const sampleRate = audioCtx.sampleRate;
+                const impulseLength = sampleRate * reverbLength;
+                const impulse = audioCtx.createBuffer(2, impulseLength, sampleRate);
+                for (let channel = 0; channel < 2; channel++) {
+                    const channelData = impulse.getChannelData(channel);
+                    for (let i = 0; i < impulseLength; i++) {
+                        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/impulseLength, 2);
+                    }
+                }
+                reverbNode.buffer = impulse;
+
+                distortionNode = audioCtx.createWaveShaper();
+                distortionNode.curve = makeDistortionCurve(0);
+                distortionNode.oversample = '4x';
+
+                // Conectar: filter -> distortion -> reverb -> masterGain -> analyser -> destination
+                filterNode.connect(distortionNode);
+                distortionNode.connect(reverbNode);
+                reverbNode.connect(masterGain);
+                masterGain.connect(analyser);
+                analyser.connect(audioCtx.destination);
+
+                // Crear un dry/wet para reverb (mezclamos con señal seca)
+                // Para simplificar, conectaremos los osciladores directamente a filter y también a reverb con gain separado?
+                // En su lugar, podemos usar un GainNode para mezclar. Mejor: los osciladores se conectan a un gainNode que va a filter.
+                // Luego filter va a distortion, luego a reverb. La reverb ya tiene su mezcla interna? No, el nodo convolver es 100% wet.
+                // Para mezcla, necesitamos un dry/wet. Lo haremos con un gain para seco y otro para húmedo.
+                // Simplificamos: por ahora solo conectamos filter -> distortion -> masterGain, y dejamos reverb aparte (lo conectaremos en paralelo con un mezclador)
+                // Pero para mantener simple, haremos que la reverb sea un efecto insertado al 100% (no mezcla). Pediremos disculpas.
+                // Añadimos un mezclador sencillo: después de distortion, dividimos en dos: seco y wet.
+                const wetGain = audioCtx.createGain();
+                const dryGain = audioCtx.createGain();
+                distortionNode.connect(dryGain);
+                distortionNode.connect(wetGain);
+                wetGain.connect(reverbNode);
+                reverbNode.connect(masterGain);
+                dryGain.connect(masterGain);
+                // Controlaremos la mezcla desde el slider reverb (wetGain.gain)
+                wetGain.gain.value = 0.2;
+                dryGain.gain.value = 1 - 0.2;
+
+                // Guardamos referencias para actualizar
+                window.wetGain = wetGain;
+                window.dryGain = dryGain;
+
+                initialized = true;
+            }
+
+            function makeDistortionCurve(amount) {
+                const k = amount * 100;
+                const n_samples = 44100;
+                const curve = new Float32Array(n_samples);
+                for (let i = 0; i < n_samples; ++i) {
+                    const x = (i * 2) / n_samples - 1;
+                    curve[i] = (Math.PI + k) * x / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            }
+
+            // ==================== SÍNTESIS DE NOTA ====================
+            function playNote(freq) {
+                if (!initialized) return;
+
+                const now = audioCtx.currentTime;
+
+                // Oscilador
+                const osc = audioCtx.createOscillator();
+                osc.type = currentWaveform;
+                osc.frequency.value = freq;
+
+                // Envolvente de ganancia
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = 0;
+
+                // Conectar: osc -> gainNode -> filter (ya conectado)
+                osc.connect(gainNode);
+                gainNode.connect(filterNode);
+
+                // Aplicar ADSR
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(1, now + adsr.attack);
+                gainNode.gain.linearRampToValueAtTime(adsr.sustain, now + adsr.attack + adsr.decay);
+                // El sustain se mantendrá hasta que soltemos la nota
+
+                osc.start(now);
+                // Guardamos para poder soltar después
+                return { osc, gainNode, startTime: now, releaseTime: null };
+            }
+
+            function releaseNote(noteObj) {
+                const now = audioCtx.currentTime;
+                const gainNode = noteObj.gainNode;
+                // Aplicar release
+                gainNode.gain.cancelScheduledValues(now);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + adsr.release);
+                noteObj.osc.stop(now + adsr.release);
+            }
+
+            // ==================== TECLADO VIRTUAL ====================
+            function buildKeyboard() {
+                const container = document.getElementById('keyboard-container');
+                container.innerHTML = '';
+                const whiteNotes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4'];
+                const blackNotes = ['C#3','D#3','F#3','G#3','A#3','C#4','D#4','F#4','G#4','A#4'];
+                const allNotes = [];
+
+                // Crear blancas
+                whiteNotes.forEach(n => {
+                    const key = document.createElement('div');
+                    key.className = 'key white-key';
+                    key.dataset.note = n;
+                    key.textContent = n;
+                    container.appendChild(key);
+                });
+
+                // Crear negras y posicionarlas encima (con CSS)
+                // Para simplificar, las añadimos absolutas dentro del contenedor con margen negativo
+                // Pero como el contenedor es flex, necesitamos un wrapper? Mejor usamos un contenedor relativo y posicionamos con absolute.
+                container.style.position = 'relative';
+                container.style.height = '200px';
+                // Las blancas ya están en flex, ahora añadimos las negras con posición absoluta
+                // Calculamos posiciones basadas en índices
+                const whiteKeys = container.children;
+                const blackPositions = [1,2,4,5,6,8,9,11,12,13]; // índices de blancas donde va negra (empezando 0)
+                blackNotes.forEach((note, idx) => {
+                    const key = document.createElement('div');
+                    key.className = 'key black-key';
+                    key.dataset.note = note;
+                    key.textContent = note;
+                    key.style.position = 'absolute';
+                    // Colocar sobre la blanca correspondiente
+                    const whiteIndex = blackPositions[idx];
+                    if (whiteKeys[whiteIndex]) {
+                        const left = whiteKeys[whiteIndex].offsetLeft - 15;
+                        key.style.left = left + 'px';
+                        key.style.top = '0';
+                    }
+                    container.appendChild(key);
+                });
+            }
+            buildKeyboard();
+
+            // ==================== EVENTOS DEL TECLADO ====================
+            document.querySelectorAll('.key').forEach(key => {
+                key.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const note = key.dataset.note;
+                    const freq = notesFreq[note];
+                    if (freq && !activeNotes.has(note)) {
+                        key.classList.add('active');
+                        const noteObj = playNote(freq);
+                        if (noteObj) activeNotes.set(note, noteObj);
+                    }
+                });
+                key.addEventListener('mouseup', () => {
+                    const note = key.dataset.note;
+                    if (activeNotes.has(note)) {
+                        releaseNote(activeNotes.get(note));
+                        activeNotes.delete(note);
+                        key.classList.remove('active');
+                    }
+                });
+                key.addEventListener('mouseleave', () => {
+                    const note = key.dataset.note;
+                    if (activeNotes.has(note)) {
+                        releaseNote(activeNotes.get(note));
+                        activeNotes.delete(note);
+                        key.classList.remove('active');
+                    }
+                });
+            });
+
+            // Soporte para teclado físico (mapeo QWERTY a notas)
+            const keyMap = {
+                'a': 'C3', 'w': 'C#3', 's': 'D3', 'e': 'D#3', 'd': 'E3', 'f': 'F3', 't': 'F#3', 'g': 'G3', 'y': 'G#3', 'h': 'A3', 'u': 'A#3', 'j': 'B3', 'k': 'C4', 'o': 'C#4', 'l': 'D4', 'p': 'D#4', ';': 'E4', "'": 'F4'
+            };
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+                const note = keyMap[e.key.toLowerCase()];
+                if (note && !activeNotes.has(note)) {
+                    const keyEl = Array.from(document.querySelectorAll('.key')).find(el => el.dataset.note === note);
+                    if (keyEl) keyEl.classList.add('active');
+                    const noteObj = playNote(notesFreq[note]);
+                    if (noteObj) activeNotes.set(note, noteObj);
+                }
+            });
+            window.addEventListener('keyup', (e) => {
+                const note = keyMap[e.key.toLowerCase()];
+                if (note && activeNotes.has(note)) {
+                    releaseNote(activeNotes.get(note));
+                    activeNotes.delete(note);
+                    const keyEl = Array.from(document.querySelectorAll('.key')).find(el => el.dataset.note === note);
+                    if (keyEl) keyEl.classList.remove('active');
+                }
+            });
+
+            // ==================== CONTROLES ====================
+            document.getElementById('start-audio').addEventListener('click', () => {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                initAudio();
+            });
+
+            // Onda
+            document.querySelectorAll('.wave-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.wave-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentWaveform = btn.dataset.wave;
+                });
+            });
+
+            // Sliders
+            document.getElementById('master-gain').addEventListener('input', (e) => {
+                if (masterGain) masterGain.gain.value = e.target.value;
+            });
+
+            document.getElementById('filter-freq').addEventListener('input', (e) => {
+                document.getElementById('filter-freq-val').textContent = e.target.value + ' Hz';
+                if (filterNode) filterNode.frequency.value = e.target.value;
+            });
+            document.getElementById('filter-q').addEventListener('input', (e) => {
+                document.getElementById('filter-q-val').textContent = e.target.value;
+                if (filterNode) filterNode.Q.value = e.target.value;
+            });
+
+            function updateADSR() {
+                adsr.attack = parseFloat(document.getElementById('attack').value);
+                adsr.decay = parseFloat(document.getElementById('decay').value);
+                adsr.sustain = parseFloat(document.getElementById('sustain').value);
+                adsr.release = parseFloat(document.getElementById('release').value);
+                document.getElementById('attack-val').textContent = adsr.attack.toFixed(3) + ' s';
+                document.getElementById('decay-val').textContent = adsr.decay.toFixed(3) + ' s';
+                document.getElementById('sustain-val').textContent = adsr.sustain.toFixed(2);
+                document.getElementById('release-val').textContent = adsr.release.toFixed(3) + ' s';
+                // Actualizar curva visual (simulada)
+            }
+            document.getElementById('attack').addEventListener('input', updateADSR);
+            document.getElementById('decay').addEventListener('input', updateADSR);
+            document.getElementById('sustain').addEventListener('input', updateADSR);
+            document.getElementById('release').addEventListener('input', updateADSR);
+            updateADSR();
+
+            document.getElementById('reverb').addEventListener('input', (e) => {
+                const val = e.target.value;
+                document.getElementById('reverb-val').textContent = Math.round(val*100) + '%';
+                if (window.wetGain) {
+                    window.wetGain.gain.value = val;
+                    window.dryGain.gain.value = 1 - val;
+                }
+            });
+
+            document.getElementById('distortion').addEventListener('input', (e) => {
+                const val = e.target.value;
+                document.getElementById('distortion-val').textContent = val;
+                if (distortionNode) {
+                    distortionNode.curve = makeDistortionCurve(val);
+                }
+            });
+
+            // ==================== VISUALIZADOR ====================
+            const canvas = document.getElementById('waveform-canvas');
+            const ctx = canvas.getContext('2d');
+            let visualMode = 'wave';
+
+            document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    visualMode = btn.dataset.mode;
+                });
+            });
+
+            function draw() {
+                if (!initialized || !analyser) {
+                    requestAnimationFrame(draw);
+                    return;
+                }
+
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                if (visualMode === 'wave') {
+                    analyser.getByteTimeDomainData(dataArray);
+                    ctx.strokeStyle = 'cyan';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const sliceWidth = canvas.width / bufferLength;
+                    let x = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 128.0;
+                        const y = v * canvas.height / 2;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+                    ctx.stroke();
+                } else if (visualMode === 'spectrum') {
+                    analyser.getByteFrequencyData(dataArray);
+                    ctx.fillStyle = '#00f0ff';
+                    const barWidth = canvas.width / bufferLength * 2.5;
+                    let x = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        const barHeight = dataArray[i] / 255 * canvas.height;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 1;
+                    }
+                } else if (visualMode === 'particles') {
+                    // Partículas simples
+                    analyser.getByteFrequencyData(dataArray);
+                    const avg = dataArray.reduce((a,b) => a+b,0) / bufferLength;
+                    const numParticles = 50;
+                    ctx.fillStyle = '#ff00aa';
+                    for (let i=0; i<numParticles; i++) {
+                        const x = (i/numParticles) * canvas.width + Math.sin(Date.now()/200 + i)*10;
+                        const y = canvas.height/2 + Math.sin(Date.now()/100 + i)*avg/2;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 3, 0, 2*Math.PI);
+                        ctx.fill();
+                    }
+                }
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+
+            // ==================== SECUENCIADOR ====================
+            const sequencerGrid = document.getElementById('sequencer-grid');
+            const numSteps = 8;
+            const numNotes = 8; // usaremos las primeras 8 notas de noteNames (C3 a G3)
+            let sequencerSteps = Array(numNotes).fill().map(() => Array(numSteps).fill(false));
+            let currentStep = 0;
+            let isPlaying = false;
+            let intervalId = null;
+
+            // Crear grid
+            for (let row = 0; row < numNotes; row++) {
+                for (let col = 0; col < numSteps; col++) {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'step';
+                    stepDiv.dataset.row = row;
+                    stepDiv.dataset.col = col;
+                    stepDiv.addEventListener('click', () => {
+                        sequencerSteps[row][col] = !sequencerSteps[row][col];
+                        stepDiv.classList.toggle('active');
+                    });
+                    sequencerGrid.appendChild(stepDiv);
+                }
+            }
+
+            function updateGrid() {
+                const steps = document.querySelectorAll('.step');
+                steps.forEach(step => {
+                    const row = step.dataset.row;
+                    const col = step.dataset.col;
+                    if (sequencerSteps[row][col]) step.classList.add('active');
+                    else step.classList.remove('active');
+                });
+            }
+
+            document.getElementById('sequencer-play').addEventListener('click', () => {
+                if (isPlaying) {
+                    clearInterval(intervalId);
+                    isPlaying = false;
+                    document.getElementById('sequencer-play').textContent = '▶ PLAY';
+                } else {
+                    isPlaying = true;
+                    document.getElementById('sequencer-play').textContent = '⏸ PAUSE';
+                    const bpm = document.getElementById('bpm').value;
+                    const stepTime = 60 / bpm / 2; // corcheas
+                    currentStep = 0;
+                    intervalId = setInterval(() => {
+                        // Remover clase current de todos
+                        document.querySelectorAll('.step').forEach(s => s.classList.remove('current'));
+                        // Marcar paso actual
+                        const steps = document.querySelectorAll('.step');
+                        for (let row = 0; row < numNotes; row++) {
+                            const idx = row * numSteps + currentStep;
+                            if (steps[idx]) steps[idx].classList.add('current');
+                            if (sequencerSteps[row][currentStep]) {
+                                // Disparar nota
+                                const noteName = noteNames[row]; // asumiendo row 0 = C3
+                                const freq = notesFreq[noteName];
+                                if (freq) {
+                                    const noteObj = playNote(freq);
+                                    if (noteObj) {
+                                        // Programar release después de un tiempo corto (duración de paso)
+                                        setTimeout(() => {
+                                            releaseNote(noteObj);
+                                        }, stepTime * 1000 * 0.9);
+                                    }
+                                }
+                            }
+                        }
+                        currentStep = (currentStep + 1) % numSteps;
+                    }, stepTime * 1000);
+                }
+            });
+
+            document.getElementById('bpm').addEventListener('input', (e) => {
+                document.getElementById('bpm-val').textContent = e.target.value;
+                if (isPlaying) {
+                    clearInterval(intervalId);
+                    // reiniciar con nuevo tempo
+                    document.getElementById('sequencer-play').click();
+                    document.getElementById('sequencer-play').click();
+                }
+            });
+
+            document.getElementById('clear-sequencer').addEventListener('click', () => {
+                sequencerSteps = Array(numNotes).fill().map(() => Array(numSteps).fill(false));
+                updateGrid();
+            });
+
+            // ==================== PELOTAS MUSICALES ====================
+            const ballCanvas = document.getElementById('ball-canvas');
+            const ballCtx = ballCanvas.getContext('2d');
+            let balls = [];
+            let ballsRunning = false;
+            let ballAnimationId;
+
+            class Ball {
+                constructor(x, y, vx, vy, radius) {
+                    this.x = x;
+                    this.y = y;
+                    this.vx = vx || (Math.random() - 0.5) * 4;
+                    this.vy = vy || (Math.random() - 0.5) * 4;
+                    this.radius = radius || Math.random() * 15 + 10;
+                    this.note = this.getRandomNote();
+                }
+                getRandomNote() {
+                    const notes = ['C4','D4','E4','F4','G4','A4','B4','C5'];
+                    return notes[Math.floor(Math.random() * notes.length)];
+                }
+                update(width, height) {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    let bounced = false;
+                    if (this.x < this.radius) {
+                        this.x = this.radius;
+                        this.vx *= -0.9;
+                        bounced = true;
+                    } else if (this.x > width - this.radius) {
+                        this.x = width - this.radius;
+                        this.vx *= -0.9;
+                        bounced = true;
+                    }
+                    if (this.y < this.radius) {
+                        this.y = this.radius;
+                        this.vy *= -0.9;
+                        bounced = true;
+                    } else if (this.y > height - this.radius) {
+                        this.y = height - this.radius;
+                        this.vy *= -0.9;
+                        bounced = true;
+                    }
+                    if (bounced && initialized) {
+                        const freq = notesFreq[this.note];
+                        if (freq) {
+                            const noteObj = playNote(freq);
+                            if (noteObj) {
+                                setTimeout(() => releaseNote(noteObj), 200);
+                            }
+                        }
+                        this.note = this.getRandomNote(); // cambiar nota
+                    }
+                }
+                draw(ctx) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = `hsl(${Math.random()*360}, 100%, 60%)`;
+                    ctx.shadowColor = 'cyan';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                }
+            }
+
+            function updateBalls() {
+                if (!ballsRunning) return;
+                ballCtx.clearRect(0, 0, ballCanvas.width, ballCanvas.height);
+                balls.forEach(ball => {
+                    ball.update(ballCanvas.width, ballCanvas.height);
+                    ball.draw(ballCtx);
+                });
+                ballAnimationId = requestAnimationFrame(updateBalls);
+            }
+
+            document.getElementById('toggle-balls').addEventListener('click', () => {
+                if (ballsRunning) {
+                    ballsRunning = false;
+                    cancelAnimationFrame(ballAnimationId);
+                } else {
+                    ballsRunning = true;
+                    updateBalls();
+                }
+            });
+
+            document.getElementById('add-ball').addEventListener('click', () => {
+                balls.push(new Ball(
+                    ballCanvas.width/2 + Math.random()*50 - 25,
+                    ballCanvas.height/2 + Math.random()*50 - 25
+                ));
+            });
+
+            // Añadir algunas pelotas iniciales
+            for (let i=0; i<3; i++) {
+                balls.push(new Ball(
+                    ballCanvas.width/2 + Math.random()*100 - 50,
+                    ballCanvas.height/2 + Math.random()*100 - 50
+                ));
+            }
+
+            // Inicializar audio al primer clic en cualquier tecla (por si no se ha pulsado start)
+            document.body.addEventListener('click', () => {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                initAudio();
+            }, { once: true });
+        })();
+    </script>
+</body>
+</html>
